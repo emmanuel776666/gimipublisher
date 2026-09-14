@@ -111,7 +111,7 @@ async function collectNews() {
 }
 
 
-// Ask Gemini to write the Facebook post
+// Ask Gemini to write the Facebook posts
 async function createPost(news) {
   console.log("Creating Facebook post with Gemini...");
 
