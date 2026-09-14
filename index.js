@@ -1,5 +1,5 @@
 require("dotenv").config();
-
+const cron = require("node-cron");
 const Parser = require("rss-parser");
 const { GoogleGenAI } = require("@google/genai");
 
@@ -263,4 +263,9 @@ async function runBot() {
 
 
 
-runBot();
+cron.schedule("0 7 * * *", () => {
+  console.log("7:00 AM Nigeria time. Starting morning news bot...");
+  runBot();
+}, {
+  timezone: "Africa/Lagos"
+});
