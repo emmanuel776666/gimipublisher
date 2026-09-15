@@ -36,7 +36,17 @@ function getNigeriaYesterday() {
 
   return nigeriaDate.toISOString().split("T")[0];
 }
+function getNigeriaToday() {
+  const now = new Date();
 
+  const nigeriaDate = new Date(
+    now.toLocaleString("en-US", {
+      timeZone: "Africa/Lagos",
+    })
+  );
+
+  return nigeriaDate.toISOString().split("T")[0];
+}
 
 // News sources
 const feeds = {
@@ -118,7 +128,7 @@ async function createPost(news) {
   const prompt = `
 You are a professional morning news editor.
 
-Today is September 14, 2026.
+Today is ${getNigeriaToday()}.
 
 The news below was collected from RSS feeds.
 The target news date is ${getNigeriaYesterday()}.
