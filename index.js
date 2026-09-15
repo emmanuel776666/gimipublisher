@@ -1,5 +1,18 @@
 require("dotenv").config();
 const cron = require("node-cron");
+const http = require("http");
+
+const PORT = process.env.PORT || 3000;
+
+http.createServer((req, res) => {
+  res.writeHead(200, {
+    "Content-Type": "text/plain"
+  });
+
+  res.end("Morning News Bot is running.");
+}).listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 const Parser = require("rss-parser");
 const { GoogleGenAI } = require("@google/genai");
 
@@ -279,3 +292,4 @@ cron.schedule("0 7 * * *", () => {
 }, {
   timezone: "Africa/Lagos"
 });
+
