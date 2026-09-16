@@ -240,7 +240,7 @@ async function postToFacebook(message) {
   console.log("\nPosting to Facebook...");
 
   const pageId = process.env.FACEBOOK_PAGE_ID;
-  const accessToken = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
+  const accessToken = process.env.FACEBOOK_ACCESS_TOKEN;
 
   if (!pageId || !accessToken) {
     throw new Error("Facebook Page ID or access token is missing.");
