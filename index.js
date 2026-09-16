@@ -194,11 +194,35 @@ ECONOMY:
 ${JSON.stringify(news.economy, null, 2)}
 `;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3.6-flash",
-    contents: prompt,
-  });
+ let response;
 
+for (let attempt = 1; attempt <= 3; attempt++) {
+  try {
+    console.log(`Gemini attempt ${attempt}/3...`);
+
+    response = await ai.models.generateContent({
+      model: "gemini-3.6-flash",
+      contents: prompt,
+    });
+
+    break;
+
+  } catch (error) {
+    console.log(`Gemini attempt ${attempt} failed:`, error.status);
+
+    if (attempt === 3) {
+      throw error;
+    }
+
+    const waitTime = attempt * 10000;
+
+    console.log(`Waiting ${waitTime / 1000} seconds before retry...`);
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, waitTime);
+    });
+  }
+}
   const post = response.candidates?.[0]?.content?.parts
     ?.filter((part) => part.text)
     .map((part) => part.text)
@@ -286,8 +310,8 @@ async function runBot() {
 
 
 
-cron.schedule("0 7 * * *", () => {
-  console.log("7:00 AM Nigeria time. Starting morning news bot...");
+cron.schedule("0 8 * * *", () => {
+  console.log("8:00 AM Nigeria time. Starting morning news bot...");
   runBot();
 }, {
   timezone: "Africa/Lagos"
