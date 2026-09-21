@@ -349,9 +349,14 @@ async function runBot() {
 
 
 
-cron.schedule("0 14 * * *", () => {
-  console.log("2:00 PM Nigeria time. Starting morning news bot...");
+cron.schedule("30 14 * * *", () => {
+
+  console.log("2:30 PM Nigeria time. Starting morning news bot...");
+
   runBot();
+
 }, {
+
   timezone: "Africa/Lagos"
+
 });
