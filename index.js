@@ -274,6 +274,44 @@ async function postToFacebook(message) {
   return data;
 }
 
+async function postToWhatsApp(message) {
+  console.log("\nPosting to WhatsApp Channel...");
+
+  const channelId = process.env.WHATSAPP_CHANNEL_ID;
+  const token = process.env.WHAPI_TOKEN;
+
+  if (!channelId || !token) {
+    throw new Error("WhatsApp Channel ID or Whapi token is missing.");
+  }
+
+  const response = await fetch(
+    `https://gate.whapi.cloud/channels/${channelId}/messages/text`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        to: channelId,
+        body: message
+      })
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      `WhatsApp API Error: ${JSON.stringify(data)}`
+    );
+  }
+
+  console.log("WhatsApp Channel post successful!");
+  console.log("WhatsApp response:", data);
+
+  return data;
+}
 // Main bot
 async function runBot() {
   try {
@@ -298,6 +336,7 @@ async function runBot() {
 
     console.log(post);
      await postToFacebook(post);
+     await postToWhatsApp(post);
     console.log("\n====================================");
     console.log("BOT FINISHED");
     console.log("====================================");
@@ -310,10 +349,9 @@ async function runBot() {
 
 
 
-cron.schedule("0 7 * * *", () => {
-  console.log("7:00 AM Nigeria time. Starting morning news bot...");
+cron.schedule("0 14 * * *", () => {
+  console.log("2:00 PM Nigeria time. Starting morning news bot...");
   runBot();
 }, {
   timezone: "Africa/Lagos"
 });
-
