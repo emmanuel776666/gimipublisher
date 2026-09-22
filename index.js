@@ -87,12 +87,12 @@ const feeds = {
 
   nigeria: [
     "https://rss.punchng.com/v1/category/latest_news",
-    "https://www.vanguardngr.com/feed"
+     "https://www.channelstv.com/feed/"
   ],
 
   world: [
     "https://feeds.bbci.co.uk/news/world/rss.xml",
-    "https://guardian.ng/feed/"
+    "https://rss.dw.com/syndication/feeds/VAS_CB_Eng_OurVoice.31791-cb.html"
   ],
 
   football: [
