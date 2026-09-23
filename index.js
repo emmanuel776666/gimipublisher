@@ -524,11 +524,10 @@ async function postToFacebook(message) {
 // POST TO WHATSAPP
 // ================================
 
+
 async function postToWhatsApp(message) {
 
-  console.log(
-    "\nPosting to WhatsApp Channel..."
-  );
+  console.log("\nPosting to WhatsApp Channel...");
 
   const channelId =
     process.env.WHATSAPP_CHANNEL_ID;
@@ -545,31 +544,20 @@ async function postToWhatsApp(message) {
   }
 
   const response = await fetch(
-
-    `https://gate.whapi.cloud/channels/${channelId}/messages/text`,
-
+    "https://gate.whapi.cloud/messages/text",
     {
-
       method: "POST",
 
       headers: {
-
         "Content-Type": "application/json",
-
         "Authorization": `Bearer ${token}`
-
       },
 
       body: JSON.stringify({
-
         to: channelId,
-
         body: message
-
       })
-
     }
-
   );
 
   const data = await response.json();
@@ -592,9 +580,7 @@ async function postToWhatsApp(message) {
   );
 
   return data;
-
 }
-
 
 // ================================
 // MORNING BOT
