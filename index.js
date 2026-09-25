@@ -39,13 +39,6 @@ const morningGreetings = [
   "📰 Good morning! Here's what you need to know this morning."
 ];
 
-const eveningGreetings = [
-  "🌆 Good evening! Here's your quick update on today's biggest stories.",
-  "📰 Evening update! Here are the important stories from today so far.",
-  "🌍 Good evening! Let's catch up on what happened today.",
-  "🌇 Here's your evening news update with the biggest stories from today."
-];
-
 
 // ================================
 // DATE FUNCTIONS
@@ -74,11 +67,6 @@ function getNigeriaYesterday() {
 }
 
 
-function getNigeriaToday() {
-  return getNigeriaDate(0);
-}
-
-
 // ================================
 // NEWS SOURCES
 // ================================
@@ -86,13 +74,11 @@ function getNigeriaToday() {
 const feeds = {
 
   nigeria: [
-    "https://rss.punchng.com/v1/category/latest_news",
-     "https://www.channelstv.com/feed/"
+    "https://rss.punchng.com/v1/category/latest_news"
   ],
 
   world: [
-    "https://feeds.bbci.co.uk/news/world/rss.xml",
-    "https://rss.dw.com/syndication/feeds/VAS_CB_Eng_OurVoice.31791-cb.html"
+    "https://feeds.bbci.co.uk/news/world/rss.xml"
   ],
 
   football: [
@@ -209,7 +195,7 @@ async function createMorningPost(news) {
 
 You are a professional morning news editor.
 
-Today is ${getNigeriaToday()}.
+Today is ${getNigeriaDate()}.
 
 The target news date is ${getNigeriaYesterday()}.
 
@@ -285,98 +271,6 @@ ${JSON.stringify(news.economy, null, 2)}
   return generateWithGemini(prompt);
 
 }
-
-
-// ================================
-// CREATE EVENING POST
-// ================================
-
-async function createEveningPost(news) {
-
-  console.log("Creating evening post with Gemini...");
-
-  const prompt = `
-
-You are a professional evening news editor.
-
-Today is ${getNigeriaToday()}.
-
-The news below was collected from RSS feeds.
-
-Create a short Facebook evening news briefing about important events that happened today.
-
-This is an evening update, so focus on stories published or developing during today.
-
-IMPORTANT:
-
-- Only use information contained in the supplied news.
-- Do not invent facts.
-- Do not add stories that are not supplied.
-- Select the most important stories.
-- Mention the source name when possible.
-- Keep the language simple and natural.
-- No Markdown.
-- No URLs.
-- No website addresses.
-- No hashtags.
-- Maximum 450 words.
-- Give exactly 2 important Nigeria stories.
-- Give exactly 2 World stories.
-- Give exactly 2 Football stories.
-- Give exactly 2 Technology stories.
-- Give exactly 2 Economy/Business stories.
-- Nigeria News should appear as the 3rd or 4th major section.
-- Focus on news from today, not yesterday.
-
-Use this structure:
-
-🌆 Good evening! Here's your quick update on today's biggest stories.
-
-🌍 WORLD NEWS:
-
-2 important stories.
-
-⚽ FOOTBALL:
-
-2 important football stories.
-
-🇳🇬 NIGERIA NEWS:
-
-2 important Nigeria stories.
-
-💻 TECHNOLOGY:
-
-2 important technology stories.
-
-💰 ECONOMY:
-
-2 important economy/business stories.
-
-End with one short positive evening message.
-
-NEWS DATA:
-
-NIGERIA:
-${JSON.stringify(news.nigeria, null, 2)}
-
-WORLD:
-${JSON.stringify(news.world, null, 2)}
-
-FOOTBALL:
-${JSON.stringify(news.football, null, 2)}
-
-TECHNOLOGY:
-${JSON.stringify(news.technology, null, 2)}
-
-ECONOMY:
-${JSON.stringify(news.economy, null, 2)}
-
-`;
-
-  return generateWithGemini(prompt);
-
-}
-
 
 // ================================
 // GEMINI GENERATOR
@@ -655,78 +549,6 @@ async function runMorningBot() {
 
 
 // ================================
-// EVENING BOT
-// ================================
-
-async function runEveningBot() {
-
-  try {
-
-    console.log("\n====================================");
-    console.log("EVENING NEWS BOT");
-    console.log("====================================");
-
-    const news =
-      await collectNews(
-        getNigeriaToday()
-      );
-
-    console.log("\nArticles found:");
-
-    console.log(
-      "Nigeria:",
-      news.nigeria.length
-    );
-
-    console.log(
-      "World:",
-      news.world.length
-    );
-
-    console.log(
-      "Football:",
-      news.football.length
-    );
-
-    console.log(
-      "Technology:",
-      news.technology.length
-    );
-
-    console.log(
-      "Economy:",
-      news.economy.length
-    );
-
-    const post =
-      await createEveningPost(news);
-
-    console.log("\n====================================");
-    console.log("EVENING FACEBOOK POST");
-    console.log("====================================");
-
-    console.log(post);
-
-    await postToFacebook(post);
-
-    await postToWhatsApp(post);
-
-    console.log("\n====================================");
-    console.log("EVENING BOT FINISHED");
-    console.log("====================================");
-
-  } catch (error) {
-
-    console.error("\nEVENING BOT ERROR:");
-
-    console.error(error);
-
-  }
-
-}
-
-
-// ================================
 // 7:00 AM MORNING SCHEDULE
 // ================================
 
@@ -737,25 +559,6 @@ cron.schedule("0 7 * * *", () => {
   );
 
   runMorningBot();
-
-}, {
-
-  timezone: "Africa/Lagos"
-
-});
-
-
-// ================================
-// 5:00 PM EVENING SCHEDULE
-// ================================
-
-cron.schedule("0 17 * * *", () => {
-
-  console.log(
-    "5:00 PM Nigeria time. Starting evening news bot..."
-  );
-
-  runEveningBot();
 
 }, {
 
