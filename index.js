@@ -82,8 +82,7 @@ const feeds = {
   ],
 
   football: [
-    "https://feeds.bbci.co.uk/sport/football/rss.xml",
-    "https://www.espn.com/espn/rss/soccer/news"
+    "https://feeds.bbci.co.uk/sport/football/rss.xml"
   ],
 
   technology: [
