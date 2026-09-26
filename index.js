@@ -38,7 +38,13 @@ const morningGreetings = [
   "🌍 Morning update! Here are the important stories from yesterday.",
   "📰 Good morning! Here's what you need to know this morning."
 ];
+function getRandomGreeting() {
 
+  const randomIndex =
+    Math.floor(Math.random() * morningGreetings.length);
+
+  return morningGreetings[randomIndex];
+}
 
 // ================================
 // DATE FUNCTIONS
@@ -95,6 +101,23 @@ const feeds = {
 
 };
 
+// ================================
+// NEWS IMAGES
+// ================================
+
+const newsImages = [
+  "https://i.ibb.co/S4nNSCsk/image-9e4f28f8.jpg",
+  "https://i.ibb.co/VprZzvxx/image-aaaf25f0.jpg",
+  "https://i.ibb.co/mVyjv7fT/image-f2a490f6.jpg"
+];
+
+function getRandomImage() {
+
+  const randomIndex =
+    Math.floor(Math.random() * newsImages.length);
+
+  return newsImages[randomIndex];
+}
 
 // ================================
 // GET RSS FEED
@@ -189,6 +212,7 @@ async function collectNews(targetDate) {
 async function createMorningPost(news) {
 
   console.log("Creating morning post with Gemini...");
+  const greeting = getRandomGreeting();
 
   const prompt = `
 
@@ -224,7 +248,7 @@ IMPORTANT:
 
 Use exactly this structure:
 
-🌅 Good morning! Here's your quick look at the biggest stories from yesterday.
+${greeting}
 
 🇳🇬 NIGERIA NEWS:
 
@@ -344,12 +368,12 @@ async function generateWithGemini(prompt) {
 
 
 // ================================
-// POST TO FACEBOOK
+// POST IMAGE TO FACEBOOK
 // ================================
 
-async function postToFacebook(message) {
+async function postToFacebook(message, imageUrl) {
 
-  console.log("\nPosting to Facebook...");
+  console.log("\nPosting image to Facebook...");
 
   const pageId =
     process.env.FACEBOOK_PAGE_ID;
@@ -362,15 +386,11 @@ async function postToFacebook(message) {
     throw new Error(
       "Facebook Page ID or access token is missing."
     );
-
   }
 
   const response = await fetch(
-
-    `https://graph.facebook.com/${pageId}/feed`,
-
+    `https://graph.facebook.com/${pageId}/photos`,
     {
-
       method: "POST",
 
       headers: {
@@ -379,14 +399,14 @@ async function postToFacebook(message) {
 
       body: JSON.stringify({
 
-        message: message,
+        url: imageUrl,
+
+        caption: message,
 
         access_token: accessToken
 
       })
-
     }
-
   );
 
   const data = await response.json();
@@ -396,11 +416,10 @@ async function postToFacebook(message) {
     throw new Error(
       `Facebook API Error: ${JSON.stringify(data)}`
     );
-
   }
 
   console.log(
-    "Facebook post successful!"
+    "Facebook image post successful!"
   );
 
   console.log(
@@ -409,18 +428,16 @@ async function postToFacebook(message) {
   );
 
   return data;
-
 }
 
 
 // ================================
-// POST TO WHATSAPP
+// POST IMAGE TO WHATSAPP
 // ================================
 
+async function postToWhatsApp(message, imageUrl) {
 
-async function postToWhatsApp(message) {
-
-  console.log("\nPosting to WhatsApp Channel...");
+  console.log("\nPosting image to WhatsApp Channel...");
 
   const channelId =
     process.env.WHATSAPP_CHANNEL_ID;
@@ -433,11 +450,10 @@ async function postToWhatsApp(message) {
     throw new Error(
       "WhatsApp Channel ID or Whapi token is missing."
     );
-
   }
 
   const response = await fetch(
-    "https://gate.whapi.cloud/messages/text",
+    "https://gate.whapi.cloud/messages/image",
     {
       method: "POST",
 
@@ -447,8 +463,13 @@ async function postToWhatsApp(message) {
       },
 
       body: JSON.stringify({
+
         to: channelId,
-        body: message
+
+        media: imageUrl,
+
+        caption: message
+
       })
     }
   );
@@ -460,11 +481,10 @@ async function postToWhatsApp(message) {
     throw new Error(
       `WhatsApp API Error: ${JSON.stringify(data)}`
     );
-
   }
 
   console.log(
-    "WhatsApp Channel post successful!"
+    "WhatsApp Channel image post successful!"
   );
 
   console.log(
@@ -519,18 +539,30 @@ async function runMorningBot() {
       news.economy.length
     );
 
-    const post =
-      await createMorningPost(news);
+const post =
+  await createMorningPost(news);
 
-    console.log("\n====================================");
-    console.log("MORNING FACEBOOK POST");
-    console.log("====================================");
+const imageUrl =
+  getRandomImage();
 
-    console.log(post);
+console.log("\nSelected image:");
+console.log(imageUrl);
 
-    await postToFacebook(post);
+console.log("\n====================================");
+console.log("MORNING NEWS POST");
+console.log("====================================");
 
-    await postToWhatsApp(post);
+console.log(post);
+
+await postToFacebook(
+  post,
+  imageUrl
+);
+
+await postToWhatsApp(
+  post,
+  imageUrl
+);
 
     console.log("\n====================================");
     console.log("MORNING BOT FINISHED");
