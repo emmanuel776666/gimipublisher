@@ -80,7 +80,7 @@ function getNigeriaYesterday() {
 const feeds = {
 
   nigeria: [
-    "https://rss.punchng.com/v1/category/latest_news"
+    "https://www.channelstv.com/feed/"
   ],
 
   world: [
