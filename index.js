@@ -106,9 +106,10 @@ const feeds = {
 // ================================
 
 const newsImages = [
+  "https://i.ibb.co/nqBBKstT/images-2.jpg",
   "https://i.ibb.co/S4nNSCsk/image-9e4f28f8.jpg",
-  "https://i.ibb.co/VprZzvxx/image-aaaf25f0.jpg",
-  "https://i.ibb.co/mVyjv7fT/image-f2a490f6.jpg"
+  "https://i.ibb.co/Y79Wdky9/images-1.jpg",
+  "https://i.ibb.co/Xf8tgH9V/images.jpg"
 ];
 
 function getRandomImage() {
