@@ -23,9 +23,15 @@ const { GoogleGenAI } = require("@google/genai");
 
 const parser = new Parser();
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-});
+
+const apiKeys = [
+  process.env.GEMINI_API_KEY,
+  process.env.GEMINI_API_KEY_2
+].filter(Boolean);
+
+if (apiKeys.length === 0) {
+  throw new Error("No Gemini API keys are configured.");
+}
 
 
 // ================================
@@ -300,72 +306,92 @@ ${JSON.stringify(news.economy, null, 2)}
 // GEMINI GENERATOR
 // ================================
 
+
 async function generateWithGemini(prompt) {
+  let lastError;
 
-  let response;
+  for (const [keyIndex, apiKey] of apiKeys.entries()) {
+    const aiClient = new GoogleGenAI({
+      apiKey: apiKey
+    });
 
-  for (let attempt = 1; attempt <= 3; attempt++) {
+    // Try the current key up to 3 times.
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        console.log(
+          `Using Gemini API key ${keyIndex + 1}, attempt ${attempt}/3...`
+        );
 
-    try {
+        const response = await aiClient.models.generateContent({
+          model: "gemini-3.6-flash",
+          contents: prompt
+        });
 
-      console.log(`Gemini attempt ${attempt}/3...`);
+        const post = response.candidates?.[0]?.content?.parts
+          ?.filter(part => part.text)
+          .map(part => part.text)
+          .join("")
+          .trim();
 
-      response = await ai.models.generateContent({
+        if (!post) {
+          throw new Error("Gemini returned an empty response.");
+        }
 
-        model: "gemini-3.6-flash",
+        console.log(
+          `Gemini API key ${keyIndex + 1} succeeded.`
+        );
 
-        contents: prompt
+        return post;
 
-      });
+      } catch (error) {
+        lastError = error;
 
-      break;
+        const status = error.status || error.code;
 
-    } catch (error) {
+        console.error(
+          `Gemini key ${keyIndex + 1} failed on attempt ${attempt}:`,
+          status || error.message
+        );
 
-      console.log(
-        `Gemini attempt ${attempt} failed:`,
-        error.status
-      );
+        // Switch keys immediately for errors unlikely to
+        // be fixed by retrying the same key.
+        const permanentKeyError =
+          status === 400 ||
+          status === 401 ||
+          status === 403;
 
-      if (attempt === 3) {
+        if (permanentKeyError) {
+          console.log("Switching to the next API key.");
+          break;
+        }
 
-        throw error;
+        // Retry temporary errors twice more.
+        if (attempt < 3) {
+          const waitTime = attempt * 10000;
 
+          console.log(
+            `Waiting ${waitTime / 1000} seconds before retry...`
+          );
+
+          await new Promise(resolve => {
+            setTimeout(resolve, waitTime);
+          });
+        }
       }
-
-      const waitTime = attempt * 10000;
-
-      console.log(
-        `Waiting ${waitTime / 1000} seconds before retry...`
-      );
-
-      await new Promise((resolve) => {
-
-        setTimeout(resolve, waitTime);
-
-      });
-
     }
 
+    if (keyIndex < apiKeys.length - 1) {
+      console.log("Trying the next Gemini API key...");
+    }
   }
 
-  const post = response.candidates?.[0]?.content?.parts
-    ?.filter((part) => part.text)
-    .map((part) => part.text)
-    .join("")
-    .trim();
-
-  if (!post) {
-
-    throw new Error(
-      "Gemini returned an empty response."
-    );
-
-  }
-
-  return post;
-
+  throw new Error(
+    `All Gemini API keys failed. Last error: ${
+      lastError?.message || "Unknown error"
+    }`
+  );
 }
+
 
 
 // ================================
