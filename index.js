@@ -172,43 +172,65 @@ async function getFeed(url) {
 // COLLECT NEWS
 // ================================
 
-async function collectNews(targetDate) {
 
+async function collectNews(targetDate, beforeHour = null) {
   console.log("Researching news...");
   console.log("Target date:", targetDate);
 
+  if (beforeHour !== null) {
+    console.log(`Only including news published before ${beforeHour}:00 Nigeria time.`);
+  }
+
   const results = {};
 
-  for (const category of Object.keys(feeds)) {
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Africa/Lagos",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23"
+  });
 
+  for (const category of Object.keys(feeds)) {
     results[category] = [];
 
     for (const feedUrl of feeds[category]) {
-
       const articles = await getFeed(feedUrl);
 
       for (const article of articles) {
-
         if (!article.date) continue;
 
-        const articleDate = new Date(article.date)
-          .toISOString()
-          .split("T")[0];
+        const publishedDate = new Date(article.date);
 
-        if (articleDate === targetDate) {
+        if (Number.isNaN(publishedDate.getTime())) continue;
 
-          results[category].push(article);
+        const parts = formatter.formatToParts(publishedDate);
+        const values = {};
 
+        for (const part of parts) {
+          values[part.type] = part.value;
         }
 
+        const articleDate =
+          `${values.year}-${values.month}-${values.day}`;
+
+        const articleHour = Number(values.hour);
+
+        if (articleDate !== targetDate) continue;
+
+        // For the 5 PM post, exclude news published at or after 5 PM.
+        if (beforeHour !== null && articleHour >= beforeHour) {
+          continue;
+        }
+
+        results[category].push(article);
       }
-
     }
-
   }
 
   return results;
-
 }
 
 
@@ -301,6 +323,99 @@ ${JSON.stringify(news.economy, null, 2)}
   return generateWithGemini(prompt);
 
 }
+
+// ================================
+// CREATE EVENING POST
+// ================================
+async function createEveningPost(news) {
+  console.log("Creating evening news post with Gemini...");
+
+  const greeting = [
+    "🌆 Good evening! Here are today's important updates.",
+    "📰 Good evening! Catch up on the biggest stories of the day.",
+    "🌍 Your evening news update is here. Here is what happened today.",
+    "☀️ As the day winds down, here are the stories you need to know."
+  ];
+
+  const selectedGreeting =
+    greeting[Math.floor(Math.random() * greeting.length)];
+
+  const prompt = `
+You are a professional news editor preparing a 5 PM news briefing for Nigeria.
+
+Today's date in Nigeria is ${getNigeriaDate()}.
+
+The news below was collected from RSS feeds.
+
+Create a concise Facebook and WhatsApp evening news briefing covering events published TODAY, from the morning through the afternoon, before 5:00 PM Nigeria time.
+
+IMPORTANT:
+- Only use information contained in the supplied news.
+- Do not invent facts or add stories that are not supplied.
+- Do not include articles published on previous dates.
+- Do not include articles published at or after 5:00 PM Nigeria time.
+- Select the most important available stories.
+- Mention the source name when possible.
+- Use simple, natural English.
+- No Markdown.
+- No URLs or website addresses.
+- No hashtags.
+- Maximum 450 words.
+- Nigeria News MUST come first.
+- Give exactly 2 Nigeria stories.
+- Give exactly 2 World stories.
+- Give exactly 2 Football stories.
+- Give exactly 2 Technology stories.
+- Give exactly 2 Economy/Business stories.
+- If a category contains fewer than 2 suitable stories, do not invent stories. Briefly state that fewer verified updates were available for that category.
+
+Use this structure:
+
+${selectedGreeting}
+
+🇳🇬 NIGERIA NEWS:
+
+Important stories from today.
+
+🌍 WORLD NEWS:
+
+Important stories from today.
+
+⚽ FOOTBALL:
+
+Important football stories from today.
+
+💻 TECHNOLOGY:
+
+Important technology stories from today.
+
+💰 ECONOMY:
+
+Important economy/business stories from today.
+
+End with one short positive evening message.
+
+NEWS DATA:
+
+NIGERIA:
+${JSON.stringify(news.nigeria, null, 2)}
+
+WORLD:
+${JSON.stringify(news.world, null, 2)}
+
+FOOTBALL:
+${JSON.stringify(news.football, null, 2)}
+
+TECHNOLOGY:
+${JSON.stringify(news.technology, null, 2)}
+
+ECONOMY:
+${JSON.stringify(news.economy, null, 2)}
+`;
+
+  return generateWithGemini(prompt);
+}
+
 
 // ================================
 // GEMINI GENERATOR
@@ -523,104 +638,79 @@ async function postToWhatsApp(message, imageUrl) {
 }
 
 // ================================
-// MORNING BOT
+// MORNING AND EVENING BOT
 // ================================
 
-async function runMorningBot() {
 
+async function publishNews(isEvening = false) {
   try {
-
     console.log("\n====================================");
-    console.log("MORNING NEWS BOT");
+    console.log(isEvening ? "EVENING NEWS BOT" : "MORNING NEWS BOT");
     console.log("====================================");
 
-    const news =
-      await collectNews(
-        getNigeriaYesterday()
-      );
+    const targetDate = isEvening
+      ? getNigeriaDate()
+      : getNigeriaYesterday();
+
+    const news = await collectNews(
+      targetDate,
+      isEvening ? 17 : null
+    );
 
     console.log("\nArticles found:");
+    console.log("Nigeria:", news.nigeria.length);
+    console.log("World:", news.world.length);
+    console.log("Football:", news.football.length);
+    console.log("Technology:", news.technology.length);
+    console.log("Economy:", news.economy.length);
 
-    console.log(
-      "Nigeria:",
-      news.nigeria.length
-    );
+    const post = isEvening
+      ? await createEveningPost(news)
+      : await createMorningPost(news);
 
-    console.log(
-      "World:",
-      news.world.length
-    );
+    const imageUrl = getRandomImage();
 
-    console.log(
-      "Football:",
-      news.football.length
-    );
-
-    console.log(
-      "Technology:",
-      news.technology.length
-    );
-
-    console.log(
-      "Economy:",
-      news.economy.length
-    );
-
-const post =
-  await createMorningPost(news);
-
-const imageUrl =
-  getRandomImage();
-
-console.log("\nSelected image:");
-console.log(imageUrl);
-
-console.log("\n====================================");
-console.log("MORNING NEWS POST");
-console.log("====================================");
-
-console.log(post);
-
-await postToFacebook(
-  post,
-  imageUrl
-);
-
-await postToWhatsApp(
-  post,
-  imageUrl
-);
+    console.log("\nSelected image:");
+    console.log(imageUrl);
 
     console.log("\n====================================");
-    console.log("MORNING BOT FINISHED");
+    console.log(isEvening ? "EVENING NEWS POST" : "MORNING NEWS POST");
     console.log("====================================");
+    console.log(post);
 
+    await postToFacebook(post, imageUrl);
+    await postToWhatsApp(post, imageUrl);
+
+    console.log("\n====================================");
+    console.log("NEWS PUBLISHING FINISHED");
+    console.log("====================================");
   } catch (error) {
-
-    console.error("\nMORNING BOT ERROR:");
-
+    console.error("\nNEWS BOT ERROR:");
     console.error(error);
-
   }
-
 }
 
+async function runMorningBot() {
+  return publishNews(false);
+}
 
-// ================================
-// 7:00 AM MORNING SCHEDULE
-// ================================
+async function runEveningBot() {
+  return publishNews(true);
+}
 
+// 7:00 AM Nigeria time: yesterday's news.
 cron.schedule("0 7 * * *", () => {
-
-  console.log(
-    "7:00 AM Nigeria time. Starting morning news bot..."
-  );
-
+  console.log("7:00 AM Nigeria time. Starting morning news bot...");
   runMorningBot();
-
 }, {
-
   timezone: "Africa/Lagos"
+});
 
+// 5:00 PM Nigeria time: today's news published before 5 PM.
+cron.schedule("0 17 * * *", () => {
+  console.log("5:00 PM Nigeria time. Starting evening news bot...");
+  runEveningBot();
+}, {
+  timezone: "Africa/Lagos"
 });
 
