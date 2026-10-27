@@ -373,10 +373,6 @@ Use this structure:
 
 ${selectedGreeting}
 
-🇳🇬 NIGERIA NEWS:
-
-Important stories from today.
-
 🌍 WORLD NEWS:
 
 Important stories from today.
@@ -384,6 +380,10 @@ Important stories from today.
 ⚽ FOOTBALL:
 
 Important football stories from today.
+
+🇳🇬 NIGERIA NEWS:
+
+Important stories from today.
 
 💻 TECHNOLOGY:
 
