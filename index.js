@@ -39,10 +39,14 @@ if (apiKeys.length === 0) {
 // ================================
 
 const morningGreetings = [
-  "🌅 Good morning! Here's your quick look at the biggest stories from yesterday.",
-  "☀️ Good morning! Let's catch up on what happened around the world yesterday.",
-  "🌍 Morning update! Here are the important stories from yesterday.",
-  "📰 Good morning! Here's what you need to know this morning."
+  "🌍 Here's what happened while you were away. These are the stories making headlines.",
+  "📰 The biggest stories you need to know today, all in one place.",
+  "🚨 Here are the latest developments you shouldn't miss today.",
+  "🌍 From Nigeria to the rest of the world, here's what's making headlines.",
+  "👀 A lot is happening around the world. Here are the stories worth your attention.",
+  "📢 Your daily news update is here. Here's what you need to know.",
+  "🔥 These are the stories everyone should be talking about today.",
+  "🌐 What's happening in Nigeria and around the world? Here's your latest update."
 ];
 function getRandomGreeting() {
 
@@ -112,10 +116,10 @@ const feeds = {
 // ================================
 
 const newsImages = [
-  "https://i.ibb.co/nqBBKstT/images-2.jpg",
-  "https://i.ibb.co/S4nNSCsk/image-9e4f28f8.jpg",
-  "https://i.ibb.co/Y79Wdky9/images-1.jpg",
-  "https://i.ibb.co/Xf8tgH9V/images.jpg"
+  "https://i.ibb.co/hJtYCHH9/Whats-App-Image-2026-10-29-at-6-34-02-AM-1.webp",
+  "https://i.ibb.co/MK5xntw/image-9e4f28f8.webp",
+  "https://i.ibb.co/NgbDnHkR/Whats-App-Image-2026-10-29-at-6-34-02-AM-2.webp",
+  "https://i.ibb.co/TqrBd0yT/Whats-App-Image-2026-10-29-at-6-34-02-AM.webp"
 ];
 
 function getRandomImage() {
@@ -331,10 +335,16 @@ async function createEveningPost(news) {
   console.log("Creating evening news post with Gemini...");
 
   const greeting = [
-    "🌆 Good evening! Here are today's important updates.",
-    "📰 Good evening! Catch up on the biggest stories of the day.",
-    "🌍 Your evening news update is here. Here is what happened today.",
-    "☀️ As the day winds down, here are the stories you need to know."
+  "🌍 Here's what happened while you were away. Catch up on the biggest stories making headlines today.",
+  "📰 Your latest news update is here. Here's what you need to know today.",
+  "🔥 These are today's biggest stories. Here's what you shouldn't miss.",
+  "🌍 From Nigeria to around the world, here's what's making headlines today.",
+  "👀 Here's what's happening today. Catch up on the stories everyone needs to know.",
+  "📢 The latest developments are here. Get caught up on today's biggest stories.",
+  "🌐 Here's your daily news update. These are the stories making waves today.",
+  "🚨 Catch up on today's important updates, from Nigeria to the rest of the world.",
+  "🌍 Your evening news update is here. Here is what happened today.",
+  "☀️ As the day winds down, here are the stories you need to know."
   ];
 
   const selectedGreeting =
