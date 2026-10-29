@@ -338,7 +338,6 @@ async function createEveningPost(news) {
   "🌍 Here's what happened while you were away. Catch up on the biggest stories making headlines today.",
   "📰 Your latest news update is here. Here's what you need to know today.",
   "🔥 These are today's biggest stories. Here's what you shouldn't miss.",
-  "🌍 From Nigeria to around the world, here's what's making headlines today.",
   "👀 Here's what's happening today. Catch up on the stories everyone needs to know.",
   "📢 The latest developments are here. Get caught up on today's biggest stories.",
   "🌐 Here's your daily news update. These are the stories making waves today.",
@@ -371,10 +370,10 @@ IMPORTANT:
 - No URLs or website addresses.
 - No hashtags.
 - Maximum 450 words.
-- Nigeria News MUST come first.
-- Give exactly 2 Nigeria stories.
+- World News MUST come first.
 - Give exactly 2 World stories.
 - Give exactly 2 Football stories.
+- Give exactly 2 Nigeria stories.
 - Give exactly 2 Technology stories.
 - Give exactly 2 Economy/Business stories.
 - If a category contains fewer than 2 suitable stories, do not invent stories. Briefly state that fewer verified updates were available for that category.
