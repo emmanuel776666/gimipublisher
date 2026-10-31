@@ -118,7 +118,7 @@ const feeds = {
 const newsImages = [
   "https://i.ibb.co/hJtYCHH9/Whats-App-Image-2026-10-29-at-6-34-02-AM-1.webp",
   "https://i.ibb.co/MK5xntw/image-9e4f28f8.webp",
-  "https://i.ibb.co/NgbDnHkR/Whats-App-Image-2026-10-29-at-6-34-02-AM-2.webp",
+  "https://i.ibb.co/4Zc52sCZ/Whats-App-Image-2026-10-31-at-7-15-02-AM.jpg",
   "https://i.ibb.co/TqrBd0yT/Whats-App-Image-2026-10-29-at-6-34-02-AM.webp"
 ];
 
