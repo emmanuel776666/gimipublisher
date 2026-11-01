@@ -121,65 +121,9 @@ const newsImages = [
   "https://i.ibb.co/TqrBd0yT/Whats-App-Image-2026-10-29-at-6-34-02-AM.webp"
 ];
 
-
-async function getAvailableImage() {
-  // Make a copy so the original image list stays unchanged.
-  const imagesToCheck = [...newsImages];
-
-  // Shuffle the images so the first image is random.
-  for (let i = imagesToCheck.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-
-    [imagesToCheck[i], imagesToCheck[j]] =
-      [imagesToCheck[j], imagesToCheck[i]];
-  }
-
-  // Check each image one after another.
-  for (const imageUrl of imagesToCheck) {
-    try {
-      console.log("Checking image:", imageUrl);
-
-      const response = await fetch(imageUrl, {
-        method: "GET",
-        headers: {
-          "Range": "bytes=0-0"
-        },
-        signal: AbortSignal.timeout(10000)
-      });
-
-      const contentType =
-        response.headers.get("content-type") || "";
-
-      const isImage =
-        contentType.toLowerCase().startsWith("image/");
-
-      if (response.ok && isImage) {
-        console.log("Working image found:", imageUrl);
-
-        await response.body?.cancel();
-
-        return imageUrl;
-      }
-
-      console.log(
-        "Image unavailable or invalid. Trying the next image...",
-        response.status,
-        contentType
-      );
-
-      await response.body?.cancel();
-
-    } catch (error) {
-      console.log(
-        "Image check failed. Trying the next image...",
-        error.message
-      );
-    }
-  }
-
-  console.log("All images failed. Publishing text only.");
-
-  return null;
+function getRandomImage() {
+  const randomIndex = Math.floor(Math.random() * newsImages.length);
+  return newsImages[randomIndex];
 }
 
 
@@ -576,8 +520,9 @@ async function generateWithGemini(prompt) {
 // ================================
 
 
-async function postToFacebook(message, imageUrl) {
-  console.log("\nPosting to Facebook...");
+
+async function postToFacebook(message) {
+  console.log("\n========== FACEBOOK PUBLISHING ==========");
 
   const pageId = process.env.FACEBOOK_PAGE_ID;
   const accessToken = process.env.FACEBOOK_ACCESS_TOKEN;
@@ -588,49 +533,136 @@ async function postToFacebook(message, imageUrl) {
     );
   }
 
-  // If an image is available, publish an image post.
-  // Otherwise, publish a text-only post.
-  const endpoint = imageUrl
-    ? `https://graph.facebook.com/${pageId}/photos`
-    : `https://graph.facebook.com/${pageId}/feed`;
+  // Copy and randomly shuffle all available images.
+  const imagesToTry = [...newsImages];
 
-  const postData = imageUrl
-    ? {
-        url: imageUrl,
-        caption: message,
-        access_token: accessToken
+  for (let i = imagesToTry.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+
+    [imagesToTry[i], imagesToTry[j]] =
+      [imagesToTry[j], imagesToTry[i]];
+  }
+
+  // Try each image directly on Facebook.
+  for (let i = 0; i < imagesToTry.length; i++) {
+    const imageUrl = imagesToTry[i];
+
+    try {
+      console.log(
+        `Facebook: Trying image ${i + 1}/${imagesToTry.length}...`
+      );
+
+      const response = await fetch(
+        `https://graph.facebook.com/${pageId}/photos`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            url: imageUrl,
+            caption: message,
+            access_token: accessToken
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const facebookError = data.error || {};
+
+        const errorMessage =
+          facebookError.message || JSON.stringify(data);
+
+        const errorCode = Number(facebookError.code);
+
+        console.error(
+          `Facebook rejected image ${i + 1}:`,
+          errorMessage
+        );
+
+        // Authentication and permission errors
+        // cannot be fixed by trying another image.
+        if (
+          errorCode === 190 ||
+          errorCode === 10 ||
+          errorCode === 200
+        ) {
+          throw new Error(
+            `Facebook authentication/permission error: ${errorMessage}`
+          );
+        }
+
+        console.log("Trying the next image...");
+        continue;
       }
-    : {
-        message: message,
-        access_token: accessToken
+
+      console.log(
+        `Facebook image post successful using image ${i + 1}!`
+      );
+
+      console.log("Facebook Post ID:", data.id);
+
+      return {
+        success: true,
+        type: "image",
+        postId: data.id
       };
 
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(postData)
-  });
+    } catch (error) {
+      // Do not continue trying images for authentication errors.
+      if (
+        error.message.includes("authentication/permission error")
+      ) {
+        throw error;
+      }
+
+      console.error(
+        `Facebook image ${i + 1} failed:`,
+        error.message
+      );
+
+      console.log("Trying the next image...");
+    }
+  }
+
+  // All images failed. Try publishing the news as text.
+  console.log("\nAll Facebook images failed.");
+  console.log("Trying Facebook text-only publishing...");
+
+  const response = await fetch(
+    `https://graph.facebook.com/${pageId}/feed`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: message,
+        access_token: accessToken
+      })
+    }
+  );
 
   const data = await response.json();
 
   if (!response.ok) {
     throw new Error(
-      `Facebook API Error: ${JSON.stringify(data)}`
+      `Facebook text-only publishing failed: ${JSON.stringify(data)}`
     );
   }
 
-  console.log(
-    imageUrl
-      ? "Facebook image post successful!"
-      : "Facebook text-only post successful!"
-  );
+  console.log("Facebook text-only post successful!");
+  console.log("Facebook Post ID:", data.id);
 
-  console.log("Post ID:", data.id);
-
-  return data;
+  return {
+    success: true,
+    type: "text",
+    postId: data.id
+  };
 }
+
 
 
 
@@ -639,8 +671,9 @@ async function postToFacebook(message, imageUrl) {
 // ================================
 
 
+
 async function postToWhatsApp(message, imageUrl) {
-  console.log("\nPosting to WhatsApp Channel...");
+  console.log("\n========== WHATSAPP PUBLISHING ==========");
 
   const channelId = process.env.WHATSAPP_CHANNEL_ID;
   const token = process.env.WHAPI_TOKEN;
@@ -651,49 +684,85 @@ async function postToWhatsApp(message, imageUrl) {
     );
   }
 
-  // Choose the image endpoint or text endpoint.
-  const endpoint = imageUrl
-    ? "https://gate.whapi.cloud/messages/image"
-    : "https://gate.whapi.cloud/messages/text";
+  // Try publishing with an image first.
+  if (imageUrl) {
+    try {
+      console.log("WhatsApp: Trying image post...");
 
-  const postData = imageUrl
-    ? {
-        to: channelId,
-        media: imageUrl,
-        caption: message
+      const response = await fetch(
+        "https://gate.whapi.cloud/messages/image",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            to: channelId,
+            media: imageUrl,
+            caption: message
+          })
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(JSON.stringify(data));
       }
-    : {
-        to: channelId,
-        body: message
+
+      console.log("WhatsApp image post successful!");
+      console.log("WhatsApp response:", data);
+
+      return {
+        success: true,
+        type: "image"
       };
 
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`
-    },
-    body: JSON.stringify(postData)
-  });
+    } catch (error) {
+      console.error(
+        "WhatsApp image post failed:",
+        error.message
+      );
+
+      console.log("Trying WhatsApp text-only publishing...");
+    }
+  }
+
+  // If there is no image or the image post failed,
+  // publish the news as text.
+  const response = await fetch(
+    "https://gate.whapi.cloud/messages/text",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        to: channelId,
+        body: message
+      })
+    }
+  );
 
   const data = await response.json();
 
   if (!response.ok) {
     throw new Error(
-      `WhatsApp API Error: ${JSON.stringify(data)}`
+      `WhatsApp text-only publishing failed: ${JSON.stringify(data)}`
     );
   }
 
-  console.log(
-    imageUrl
-      ? "WhatsApp image post successful!"
-      : "WhatsApp text-only post successful!"
-  );
-
+  console.log("WhatsApp text-only post successful!");
   console.log("WhatsApp response:", data);
 
-  return data;
+  return {
+    success: true,
+    type: "text"
+  };
 }
+
 
 
 // ================================
@@ -701,12 +770,13 @@ async function postToWhatsApp(message, imageUrl) {
 // ================================
 
 
-async function publishNews(isEvening = false) {
-  try {
-    console.log("\n====================================");
-    console.log(isEvening ? "EVENING NEWS BOT" : "MORNING NEWS BOT");
-    console.log("====================================");
 
+async function publishNews(isEvening = false) {
+  console.log("\n====================================");
+  console.log(isEvening ? "EVENING NEWS BOT" : "MORNING NEWS BOT");
+  console.log("====================================");
+
+  try {
     const targetDate = isEvening
       ? getNigeriaDate()
       : getNigeriaYesterday();
@@ -727,31 +797,57 @@ async function publishNews(isEvening = false) {
       ? await createEveningPost(news)
       : await createMorningPost(news);
 
-    const imageUrl = await getAvailableImage();
+    console.log("\n========== GENERATED NEWS ==========");
+    console.log(post);
 
-  if (imageUrl) {
-      console.log("\nSelected working image:");
-      console.log(imageUrl);
-    } else {
-      console.log("\nNo working images found. Text-only publishing will be used.");
+    // Select an image for WhatsApp.
+    const imageUrl = getRandomImage();
+
+    console.log("\nSelected WhatsApp image:", imageUrl);
+
+    // FACEBOOK: Its own independent publishing process.
+    try {
+      const facebookResult = await postToFacebook(post);
+
+      console.log(
+        "\nFACEBOOK RESULT:",
+        facebookResult.type,
+        "POST SUCCESSFUL"
+      );
+
+    } catch (error) {
+      console.error("\nFACEBOOK PUBLISHING FAILED:");
+      console.error(error.message);
+    }
+
+    // WHATSAPP: Still runs even if Facebook fails.
+    try {
+      const whatsappResult = await postToWhatsApp(
+        post,
+        imageUrl
+      );
+
+      console.log(
+        "\nWHATSAPP RESULT:",
+        whatsappResult.type,
+        "POST SUCCESSFUL"
+      );
+
+    } catch (error) {
+      console.error("\nWHATSAPP PUBLISHING FAILED:");
+      console.error(error.message);
     }
 
     console.log("\n====================================");
-    console.log(isEvening ? "EVENING NEWS POST" : "MORNING NEWS POST");
+    console.log("NEWS PUBLISHING PROCESS FINISHED");
     console.log("====================================");
-    console.log(post);
 
-    await postToFacebook(post, imageUrl);
-    await postToWhatsApp(post, imageUrl);
-
-    console.log("\n====================================");
-    console.log("NEWS PUBLISHING FINISHED");
-    console.log("====================================");
   } catch (error) {
-    console.error("\nNEWS BOT ERROR:");
+    console.error("\nNEWS GENERATION ERROR:");
     console.error(error);
   }
 }
+
 
 async function runMorningBot() {
   return publishNews(false);
