@@ -42,7 +42,6 @@ const morningGreetings = [
   "🌍 Here's what happened while you were away. These are the stories making headlines.",
   "📰 The biggest stories you need to know today, all in one place.",
   "🚨 Here are the latest developments you shouldn't miss today.",
-  "🌍 From Nigeria to the rest of the world, here's what's making headlines.",
   "👀 A lot is happening around the world. Here are the stories worth your attention.",
   "📢 Your daily news update is here. Here's what you need to know.",
   "🔥 These are the stories everyone should be talking about today.",
@@ -122,13 +121,67 @@ const newsImages = [
   "https://i.ibb.co/TqrBd0yT/Whats-App-Image-2026-10-29-at-6-34-02-AM.webp"
 ];
 
-function getRandomImage() {
 
-  const randomIndex =
-    Math.floor(Math.random() * newsImages.length);
+async function getAvailableImage() {
+  // Make a copy so the original image list stays unchanged.
+  const imagesToCheck = [...newsImages];
 
-  return newsImages[randomIndex];
+  // Shuffle the images so the first image is random.
+  for (let i = imagesToCheck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+
+    [imagesToCheck[i], imagesToCheck[j]] =
+      [imagesToCheck[j], imagesToCheck[i]];
+  }
+
+  // Check each image one after another.
+  for (const imageUrl of imagesToCheck) {
+    try {
+      console.log("Checking image:", imageUrl);
+
+      const response = await fetch(imageUrl, {
+        method: "GET",
+        headers: {
+          "Range": "bytes=0-0"
+        },
+        signal: AbortSignal.timeout(10000)
+      });
+
+      const contentType =
+        response.headers.get("content-type") || "";
+
+      const isImage =
+        contentType.toLowerCase().startsWith("image/");
+
+      if (response.ok && isImage) {
+        console.log("Working image found:", imageUrl);
+
+        await response.body?.cancel();
+
+        return imageUrl;
+      }
+
+      console.log(
+        "Image unavailable or invalid. Trying the next image...",
+        response.status,
+        contentType
+      );
+
+      await response.body?.cancel();
+
+    } catch (error) {
+      console.log(
+        "Image check failed. Trying the next image...",
+        error.message
+      );
+    }
+  }
+
+  console.log("All images failed. Publishing text only.");
+
+  return null;
 }
+
 
 // ================================
 // GET RSS FEED
@@ -522,129 +575,126 @@ async function generateWithGemini(prompt) {
 // POST IMAGE TO FACEBOOK
 // ================================
 
+
 async function postToFacebook(message, imageUrl) {
+  console.log("\nPosting to Facebook...");
 
-  console.log("\nPosting image to Facebook...");
-
-  const pageId =
-    process.env.FACEBOOK_PAGE_ID;
-
-  const accessToken =
-    process.env.FACEBOOK_ACCESS_TOKEN;
+  const pageId = process.env.FACEBOOK_PAGE_ID;
+  const accessToken = process.env.FACEBOOK_ACCESS_TOKEN;
 
   if (!pageId || !accessToken) {
-
     throw new Error(
       "Facebook Page ID or access token is missing."
     );
   }
 
-  const response = await fetch(
-    `https://graph.facebook.com/${pageId}/photos`,
-    {
-      method: "POST",
+  // If an image is available, publish an image post.
+  // Otherwise, publish a text-only post.
+  const endpoint = imageUrl
+    ? `https://graph.facebook.com/${pageId}/photos`
+    : `https://graph.facebook.com/${pageId}/feed`;
 
-      headers: {
-        "Content-Type": "application/json"
-      },
-
-      body: JSON.stringify({
-
+  const postData = imageUrl
+    ? {
         url: imageUrl,
-
         caption: message,
-
         access_token: accessToken
+      }
+    : {
+        message: message,
+        access_token: accessToken
+      };
 
-      })
-    }
-  );
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(postData)
+  });
 
   const data = await response.json();
 
   if (!response.ok) {
-
     throw new Error(
       `Facebook API Error: ${JSON.stringify(data)}`
     );
   }
 
   console.log(
-    "Facebook image post successful!"
+    imageUrl
+      ? "Facebook image post successful!"
+      : "Facebook text-only post successful!"
   );
 
-  console.log(
-    "Post ID:",
-    data.id
-  );
+  console.log("Post ID:", data.id);
 
   return data;
 }
+
 
 
 // ================================
 // POST IMAGE TO WHATSAPP
 // ================================
 
+
 async function postToWhatsApp(message, imageUrl) {
+  console.log("\nPosting to WhatsApp Channel...");
 
-  console.log("\nPosting image to WhatsApp Channel...");
-
-  const channelId =
-    process.env.WHATSAPP_CHANNEL_ID;
-
-  const token =
-    process.env.WHAPI_TOKEN;
+  const channelId = process.env.WHATSAPP_CHANNEL_ID;
+  const token = process.env.WHAPI_TOKEN;
 
   if (!channelId || !token) {
-
     throw new Error(
       "WhatsApp Channel ID or Whapi token is missing."
     );
   }
 
-  const response = await fetch(
-    "https://gate.whapi.cloud/messages/image",
-    {
-      method: "POST",
+  // Choose the image endpoint or text endpoint.
+  const endpoint = imageUrl
+    ? "https://gate.whapi.cloud/messages/image"
+    : "https://gate.whapi.cloud/messages/text";
 
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
-      },
-
-      body: JSON.stringify({
-
+  const postData = imageUrl
+    ? {
         to: channelId,
-
         media: imageUrl,
-
         caption: message
+      }
+    : {
+        to: channelId,
+        body: message
+      };
 
-      })
-    }
-  );
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify(postData)
+  });
 
   const data = await response.json();
 
   if (!response.ok) {
-
     throw new Error(
       `WhatsApp API Error: ${JSON.stringify(data)}`
     );
   }
 
   console.log(
-    "WhatsApp Channel image post successful!"
+    imageUrl
+      ? "WhatsApp image post successful!"
+      : "WhatsApp text-only post successful!"
   );
 
-  console.log(
-    "WhatsApp response:",
-    data
-  );
+  console.log("WhatsApp response:", data);
 
   return data;
 }
+
 
 // ================================
 // MORNING AND EVENING BOT
@@ -677,10 +727,14 @@ async function publishNews(isEvening = false) {
       ? await createEveningPost(news)
       : await createMorningPost(news);
 
-    const imageUrl = getRandomImage();
+    const imageUrl = await getAvailableImage();
 
-    console.log("\nSelected image:");
-    console.log(imageUrl);
+  if (imageUrl) {
+      console.log("\nSelected working image:");
+      console.log(imageUrl);
+    } else {
+      console.log("\nNo working images found. Text-only publishing will be used.");
+    }
 
     console.log("\n====================================");
     console.log(isEvening ? "EVENING NEWS POST" : "MORNING NEWS POST");
