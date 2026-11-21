@@ -45,7 +45,7 @@ const morningGreetings = [
   "👀 A lot is happening around the world. Here are the stories worth your attention.",
   "📢 Your daily news update is here. Here's what you need to know.",
   "🔥 These are the stories everyone should be talking about today.",
-  "🌐 What's happening in Nigeria and around the world? Here's your latest update."
+  "🌐 What's happening around the world? Here's your latest update."
 ];
 function getRandomGreeting() {
 
@@ -116,7 +116,7 @@ const feeds = {
 
 const newsImages = [
   "https://i.ibb.co/NgbDnHkR/Whats-App-Image-2026-10-29-at-6-34-02-AM-2.webp",
-  "https://i.ibb.co/MK5xntw/image-9e4f28f8.webp",
+  "https://i.ibb.co/8ghD286d/image-89f074ae.jpg",
   "https://i.ibb.co/GfqsDGJ1/Breaking-News-Globe-Broadcast.webp",
   "https://i.ibb.co/TqrBd0yT/Whats-App-Image-2026-10-29-at-6-34-02-AM.webp"
 ];
