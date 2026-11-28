@@ -34,26 +34,26 @@ if (apiKeys.length === 0) {
 }
 
 
-// ================================
-// GREETINGS
-// ================================
+// // ================================
+// // GREETINGS
+// // ================================
 
-const morningGreetings = [
-  "🌍 Here's what happened while you were away. These are the stories making headlines.",
-  "📰 The biggest stories you need to know today, all in one place.",
-  "🚨 Here are the latest developments you shouldn't miss today.",
-  "👀 A lot is happening around the world. Here are the stories worth your attention.",
-  "📢 Your daily news update is here. Here's what you need to know.",
-  "🔥 These are the stories everyone should be talking about today.",
-  "🌐 What's happening around the world? Here's your latest update."
-];
-function getRandomGreeting() {
+// const morningGreetings = [
+//   "🌍 Here's what happened while you were away. These are the stories making headlines.",
+//   "📰 The biggest stories you need to know today, all in one place.",
+//   "🚨 Here are the latest developments you shouldn't miss today.",
+//   "👀 A lot is happening around the world. Here are the stories worth your attention.",
+//   "📢 Your daily news update is here. Here's what you need to know.",
+//   "🔥 These are the stories everyone should be talking about today.",
+//   "🌐 What's happening around the world? Here's your latest update."
+// ];
+// function getRandomGreeting() {
 
-  const randomIndex =
-    Math.floor(Math.random() * morningGreetings.length);
+//   const randomIndex =
+//     Math.floor(Math.random() * morningGreetings.length);
 
-  return morningGreetings[randomIndex];
-}
+//   return morningGreetings[randomIndex];
+// }
 
 // ================================
 // DATE FUNCTIONS
@@ -235,14 +235,13 @@ async function collectNews(targetDate, beforeHour = null) {
 }
 
 
+
 // ================================
 // CREATE MORNING POST
 // ================================
 
 async function createMorningPost(news) {
-
   console.log("Creating morning post with Gemini...");
-  const greeting = getRandomGreeting();
 
   const prompt = `
 
@@ -254,10 +253,18 @@ The target news date is ${getNigeriaYesterday()}.
 
 The news below was collected from RSS feeds.
 
-Create a short Facebook morning news briefing about important events that happened yesterday.
+Create a Facebook morning news briefing about important events that happened yesterday.
 
 IMPORTANT:
 
+- Start immediately with the first Nigeria news story.
+- Do NOT write an introduction.
+- Do NOT write a greeting.
+- Do NOT add a general headline before the news.
+- Do NOT write "NIGERIA NEWS" before the first Nigeria story.
+- The first line must contain actual news information.
+- Write each story as a clear, engaging news paragraph.
+- After the two Nigeria stories, introduce the next categories with their headings.
 - Only use information contained in the supplied news.
 - Do not invent facts.
 - Do not add stories that are not supplied.
@@ -269,38 +276,43 @@ IMPORTANT:
 - No website addresses.
 - No hashtags.
 - Maximum 450 words.
-- Nigeria News MUST come first.
-- Give exactly 2 important Nigeria stories.
-- Give exactly 2 World stories.
-- Give exactly 2 Football stories.
-- Give exactly 2 Technology stories.
-- Give exactly 2 Economy/Business stories.
 
-Use exactly this structure:
+NEWS ORDER:
 
-${greeting}
+1. Two important Nigeria stories, without a category heading.
+2. Two World stories under 🌍 WORLD NEWS.
+3. Two Football stories under ⚽ FOOTBALL.
+4. Two Technology stories under 💻 TECHNOLOGY.
+5. Two Economy/Business stories under 💰 ECONOMY.
 
-🇳🇬 NIGERIA NEWS:
+- If a category contains fewer than 2 suitable stories, do not invent stories. Briefly state that fewer verified updates were available for that category.
+- Do not use numbered lists.
+- Leave a blank line between stories.
+- End with one short positive morning message.
 
-2 important Nigeria stories.
+Use this exact structure:
+
+[Start directly with the first Nigeria news story]
+
+[Second Nigeria news story]
 
 🌍 WORLD NEWS:
 
-2 important stories.
+[Two World news stories]
 
 ⚽ FOOTBALL:
 
-2 important football stories.
+[Two Football stories]
 
 💻 TECHNOLOGY:
 
-2 important technology stories.
+[Two Technology stories]
 
 💰 ECONOMY:
 
-2 important economy/business stories.
+[Two Economy/Business stories]
 
-End with one short positive morning message.
+[Short positive morning closing message]
 
 NEWS DATA:
 
@@ -322,29 +334,16 @@ ${JSON.stringify(news.economy, null, 2)}
 `;
 
   return generateWithGemini(prompt);
-
 }
+
+
 
 // ================================
 // CREATE EVENING POST
 // ================================
+
 async function createEveningPost(news) {
   console.log("Creating evening news post with Gemini...");
-
-  const greeting = [
-  "🌍 Here's what happened while you were away. Catch up on the biggest stories making headlines today.",
-  "📰 Your latest news update is here. Here's what you need to know today.",
-  "🔥 These are today's biggest stories. Here's what you shouldn't miss.",
-  "👀 Here's what's happening today. Catch up on the stories everyone needs to know.",
-  "📢 The latest developments are here. Get caught up on today's biggest stories.",
-  "🌐 Here's your daily news update. These are the stories making waves today.",
-  "🚨 Catch up on today's important updates, from Nigeria to the rest of the world.",
-  "🌍 Your evening news update is here. Here is what happened today.",
-  "☀️ As the day winds down, here are the stories you need to know."
-  ];
-
-  const selectedGreeting =
-    greeting[Math.floor(Math.random() * greeting.length)];
 
   const prompt = `
 You are a professional news editor preparing a 5 PM news briefing for Nigeria.
@@ -356,6 +355,15 @@ The news below was collected from RSS feeds.
 Create a concise Facebook and WhatsApp evening news briefing covering events published TODAY, from the morning through the afternoon, before 5:00 PM Nigeria time.
 
 IMPORTANT:
+
+- Start immediately with the first World news story.
+- Do NOT write an introduction.
+- Do NOT write a greeting.
+- Do NOT add a general headline before the news.
+- Do NOT write "WORLD NEWS" before the first World story.
+- The first line must contain actual news information.
+- Write each story as a clear, engaging news paragraph.
+- After the two World stories, introduce the remaining categories with their headings.
 - Only use information contained in the supplied news.
 - Do not invent facts or add stories that are not supplied.
 - Do not include articles published on previous dates.
@@ -367,39 +375,39 @@ IMPORTANT:
 - No URLs or website addresses.
 - No hashtags.
 - Maximum 450 words.
-- World News MUST come first.
-- Give exactly 2 World stories.
-- Give exactly 2 Football stories.
-- Give exactly 2 Nigeria stories.
-- Give exactly 2 Technology stories.
-- Give exactly 2 Economy/Business stories.
+- Give 2 World stories.
+- Give 2 Football stories.
+- Give 2 Nigeria stories.
+- Give 2 Technology stories.
+- Give 2 Economy/Business stories.
 - If a category contains fewer than 2 suitable stories, do not invent stories. Briefly state that fewer verified updates were available for that category.
+- Do not use numbered lists.
+- Leave a blank line between stories.
+- End with one short positive evening message.
 
-Use this structure:
+Use this exact structure:
 
-${selectedGreeting}
+[Start directly with the first World news story]
 
-🌍 WORLD NEWS:
-
-Important stories from today.
+[Second World news story]
 
 ⚽ FOOTBALL:
 
-Important football stories from today.
+[Two Football stories]
 
 🇳🇬 NIGERIA NEWS:
 
-Important stories from today.
+[Two Nigeria stories]
 
 💻 TECHNOLOGY:
 
-Important technology stories from today.
+[Two Technology stories]
 
 💰 ECONOMY:
 
-Important economy/business stories from today.
+[Two Economy/Business stories]
 
-End with one short positive evening message.
+[Short positive evening closing message]
 
 NEWS DATA:
 
@@ -421,6 +429,7 @@ ${JSON.stringify(news.economy, null, 2)}
 
   return generateWithGemini(prompt);
 }
+
 
 
 // ================================
